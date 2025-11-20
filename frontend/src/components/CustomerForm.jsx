@@ -2,13 +2,13 @@ import React, { useEffect, useState } from "react";
 import API from "../api/axios";
 
 export default function CustomerForm({ editing = null, onSaved, onCancel }) {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
-  const [status, setStatus] = useState("lead");
-  const [saving, setSaving] = useState(false);
+  const [firstName,setFirstName] = useState("");
+  const [lastName,setLastName] = useState("");
+  const [email,setEmail] = useState("");
+  const [phone,setPhone] = useState("");
+  const [address,setAddress] = useState("");
+  const [status,setStatus] = useState("lead");
+  const [saving,setSaving] = useState(false);
 
   useEffect(() => {
     if (editing) {
@@ -29,11 +29,8 @@ export default function CustomerForm({ editing = null, onSaved, onCancel }) {
     setSaving(true);
     try {
       const payload = { firstName, lastName, email, phone, address, status };
-      if (editing) {
-        await API.put(`/api/customers/${editing._id}`, payload);
-      } else {
-        await API.post("/api/customers", payload);
-      }
+      if (editing) await API.put(`/api/customers/${editing._id}`, payload);
+      else await API.post("/api/customers", payload);
       onSaved && onSaved();
     } catch (err) {
       alert(err?.response?.data?.error || "Save failed");
@@ -42,8 +39,8 @@ export default function CustomerForm({ editing = null, onSaved, onCancel }) {
 
   return (
     <div className="card">
-      <h3 style={{marginTop:0}}>{editing ? "Edit Customer" : "Add Customer"}</h3>
-      <form onSubmit={submit} style={{display:'grid',gap:8}}>
+      <h3 className="text-lg font-medium">{editing ? "Edit customer" : "Add customer"}</h3>
+      <form className="mt-3 space-y-2" onSubmit={submit}>
         <input className="input" placeholder="First name *" value={firstName} onChange={e=>setFirstName(e.target.value)} />
         <input className="input" placeholder="Last name" value={lastName} onChange={e=>setLastName(e.target.value)} />
         <input className="input" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} />
@@ -54,9 +51,9 @@ export default function CustomerForm({ editing = null, onSaved, onCancel }) {
           <option value="active">Customer</option>
         </select>
 
-        <div style={{display:'flex',gap:8}}>
+        <div className="flex items-center gap-2">
           <button className="btn" type="submit" disabled={saving}>{saving ? "Saving..." : (editing ? "Update" : "Add")}</button>
-          {editing ? <button type="button" className="btn ghost" onClick={onCancel}>Cancel</button> : null}
+          {editing && <button type="button" className="btn-ghost" onClick={onCancel}>Cancel</button>}
         </div>
       </form>
     </div>

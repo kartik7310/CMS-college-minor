@@ -5,6 +5,8 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import CustomersPage from "./pages/CustomersPage";
 import { AuthContext } from "./context/AuthContext";
+import CustomerDetails from "./pages/CustomerDetails";
+
 
 function PrivateRoute({ children }) {
   const { user } = React.useContext(AuthContext);
@@ -19,6 +21,7 @@ export default function App() {
         <Route path="/register" element={<Register/>} />
         <Route path="/" element={<PrivateRoute><Dashboard/></PrivateRoute>} />
         <Route path="/customers" element={<PrivateRoute><CustomersPage/></PrivateRoute>} />
+           <Route path="/customers/:id" element={<PrivateRoute><CustomerDetails/></PrivateRoute>} />
       </Routes>
     </BrowserRouter>
   );

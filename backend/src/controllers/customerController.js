@@ -36,6 +36,7 @@ export const getCustomer = async (req, res) => {
 // LIST WITH SEARCH + FILTER + PAGINATION
 export const listCustomers = async (req, res) => {
   try {
+    const user = req.user;
     const { page = 1, limit = 10, search = "", status = "" } = req.query;
 
     const query = {};
@@ -69,16 +70,23 @@ export const listCustomers = async (req, res) => {
   }
 };
 
-// UPDATE CUSTOMER
+// UPDATE CUSTOMER (OWNER ONLY)
 export const updateCustomer = async (req, res) => {
   try {
+    const customer = await Customer.findById(req.params.id);
+
+    if (!customer) return res.status(404).json({ error: "Customer not found" });
+
+    // Check if user is the owner
+    if (customer.createdBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: "Not authorized to update this customer" });
+    }
+
     const updated = await Customer.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true }
     );
-
-    if (!updated) return res.status(404).json({ error: "Customer not found" });
 
     res.json(updated);
   } catch (err) {
@@ -87,12 +95,19 @@ export const updateCustomer = async (req, res) => {
   }
 };
 
-// DELETE CUSTOMER (ADMIN ONLY)
+// DELETE CUSTOMER (OWNER ONLY)
 export const deleteCustomer = async (req, res) => {
   try {
-    const deleted = await Customer.findByIdAndDelete(req.params.id);
+    const customer = await Customer.findById(req.params.id);
 
-    if (!deleted) return res.status(404).json({ error: "Customer not found" });
+    if (!customer) return res.status(404).json({ error: "Customer not found" });
+
+    // Check if user is the owner
+    if (customer.createdBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: "Not authorized to delete this customer" });
+    }
+
+    await Customer.findByIdAndDelete(req.params.id);
 
     res.json({ ok: true });
   } catch (err) {

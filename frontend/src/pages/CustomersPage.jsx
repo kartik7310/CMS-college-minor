@@ -5,8 +5,8 @@ import CustomerList from "../components/CustomerList";
 export default function CustomersPage(){
   return (
     <div className="container">
-      <Header/>
-      <div style={{marginTop:16}}>
+      <Header />
+      <div className="mt-4">
         <CustomerList />
       </div>
     </div>

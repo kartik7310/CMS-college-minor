@@ -4,41 +4,39 @@ import API from "../api/axios";
 import { Link } from "react-router-dom";
 
 export default function Dashboard(){
-  const [stats, setStats] = useState({ total:0, leads:0 });
+  const [counts, setCounts] = useState({ total:0, leads:0 });
 
   useEffect(() => {
     async function load(){
       try {
-        const res = await API.get("/api/customers", { params:{ limit:10000 }});
+        const res = await API.get("/api/customers", { params: { limit: 10000 }});
         const all = res.data.data || [];
-        setStats({
+        setCounts({
           total: all.length,
           leads: all.filter(c => c.status === "lead").length
         });
       } catch (e) { /* ignore */ }
     }
     load();
-  },[]);
+  }, []);
 
   return (
     <div className="container">
-      <Header/>
-      <div style={{marginTop:16}}>
-        <div className="card">
-          <h2 style={{marginTop:0}}>Dashboard</h2>
-          <div style={{display:'flex',gap:24}}>
-            <div style={{flex:1}}>
-              <div className="small">Total customers</div>
-              <div style={{fontSize:24,fontWeight:700}}>{stats.total}</div>
-            </div>
-            <div style={{flex:1}}>
-              <div className="small">Leads</div>
-              <div style={{fontSize:24,fontWeight:700}}>{stats.leads}</div>
-            </div>
+      <Header />
+      <div className="card mt-4">
+        <h2 className="text-xl font-semibold">Dashboard</h2>
+        <div className="mt-4 grid grid-cols-2 gap-4">
+          <div className="p-4 bg-indigo-50 rounded">
+            <div className="small">Total customers</div>
+            <div className="text-2xl font-bold">{counts.total}</div>
           </div>
-          <div style={{marginTop:12}}>
-            <Link to="/customers" className="link">Go to Customers →</Link>
+          <div className="p-4 bg-yellow-50 rounded">
+            <div className="small">Leads</div>
+            <div className="text-2xl font-bold">{counts.leads}</div>
           </div>
+        </div>
+        <div className="mt-4">
+          <Link to="/customers" className="text-indigo-600 hover:underline">Manage customers →</Link>
         </div>
       </div>
     </div>

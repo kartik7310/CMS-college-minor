@@ -3,7 +3,7 @@ import API from "../api/axios";
 import CustomerForm from "./CustomerForm";
 import ExportButton from "./ExportButton";
 import { AuthContext } from "../context/AuthContext";
-
+import { Link } from "react-router-dom";
 export default function CustomerList(){
   const [customers, setCustomers] = useState([]);
   const [page, setPage] = useState(1);
@@ -15,20 +15,20 @@ export default function CustomerList(){
   const [loading, setLoading] = useState(false);
   const { user } = useContext(AuthContext);
 
-  const load = async (p=page) => {
+  const load = async (p=1) => {
     setLoading(true);
     try{
       const res = await API.get("/api/customers", { params: { page:p, limit, search:q, status }});
       setCustomers(res.data.data || []);
       setTotal(res.data.total || 0);
       setPage(res.data.page || p);
-    }catch(err){ alert("Failed to load"); }
+    }catch(err){ alert("Load failed"); }
     setLoading(false);
   };
 
   useEffect(()=>{ load(1); }, [q, status]);
 
-  const onDelete = async (id) => {
+  const remove = async id => {
     if (!confirm("Delete this customer?")) return;
     try{
       await API.delete(`/api/customers/${id}`);
@@ -38,62 +38,63 @@ export default function CustomerList(){
     }
   };
 
-  const onSave = ()=>{ setEditing(null); load(1); };
-
   return (
     <div className="card">
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-        <div style={{display:'flex',gap:8,alignItems:'center'}}>
-          <input className="input" placeholder="Search name / email / phone" value={q} onChange={e=>setQ(e.target.value)} style={{width:300}} />
-          <select className="input" value={status} onChange={e=>setStatus(e.target.value)} style={{width:140}}>
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center gap-3">
+          <input className="input" placeholder="Search name / email / phone" value={q} onChange={e=>setQ(e.target.value)} />
+          <select className="input w-44" value={status} onChange={e=>setStatus(e.target.value)}>
             <option value="">All</option>
             <option value="lead">Lead</option>
             <option value="active">Customer</option>
           </select>
           <button className="btn" onClick={()=>load(1)}>Search</button>
         </div>
-
-        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+        <div className="flex items-center gap-3">
           <ExportButton params={{ search:q, status }} />
         </div>
       </div>
 
-      <div style={{display:'flex',gap:12}}>
-        <div style={{flex:1}}>
-          <CustomerForm editing={editing} onSaved={onSave} onCancel={()=>setEditing(null)} />
+      <div className="grid grid-cols-3 gap-4">
+        <div className="col-span-1">
+          <CustomerForm editing={editing} onSaved={() => { setEditing(null); load(1); }} onCancel={() => setEditing(null)} />
         </div>
 
-        <div style={{flex:2}}>
-          <table className="table">
-            <thead>
-              <tr><th>Name</th><th>Email</th><th>Phone</th><th>Status</th><th>Actions</th></tr>
-            </thead>
-            <tbody>
-              {loading ? <tr><td colSpan="5">Loading...</td></tr> :
-                customers.length === 0 ? <tr><td colSpan="5">No customers</td></tr> :
+        <div className="col-span-2">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="text-sm text-slate-500">
+                <tr><th className="py-2">Name</th><th className="py-2">Email</th><th className="py-2">Phone</th><th className="py-2">Status</th><th className="py-2">Actions</th></tr>
+              </thead>
+              <tbody>
+                {loading ? (<tr><td colSpan="5" className="py-4 small">Loading...</td></tr>) :
+                customers.length === 0 ? (<tr><td colSpan="5" className="py-4 small">No customers</td></tr>) :
                 customers.map(c => (
-                  <tr key={c._id}>
-                    <td>{c.firstName} {c.lastName}</td>
-                    <td>{c.email}</td>
-                    <td>{c.phone}</td>
-                    <td className="small">{c.status}</td>
-                    <td>
-                      <button className="btn ghost" onClick={()=>setEditing(c)}>Edit</button>
-                      {/* only show delete to admin */}
-                      {user?.role === "admin" && <button className="btn" onClick={()=>onDelete(c._id)} style={{marginLeft:8}}>Delete</button>}
+                  <tr key={c._id} className="border-t">
+                    <td className="py-2">
+  <Link to={`/customers/${c._id}`} className="text-indigo-600 hover:underline">
+    {c.firstName} {c.lastName}
+  </Link>
+</td>
+                    <td className="py-2 small">{c.email}</td>
+                    <td className="py-2 small">{c.phone}</td>
+                    <td className="py-2 small">{c.status}</td>
+                    <td className="py-2">
+                      <button className="btn-ghost mr-2" onClick={()=>setEditing(c)}>Edit</button>
+                      {user?.role === "admin" && <button className="btn" onClick={()=>remove(c._id)}>Delete</button>}
                     </td>
                   </tr>
-                ))
-              }
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:12}}>
+          <div className="flex items-center justify-between mt-4">
             <div className="small">Showing {customers.length} of {total}</div>
-            <div className="pagination">
-              <button className="btn ghost" onClick={()=>{ if(page>1){ setPage(p=>p-1); load(page-1); }}}>Prev</button>
+            <div className="flex items-center gap-2">
+              <button className="btn-ghost" onClick={() => { if(page>1) load(page-1); }}>Prev</button>
               <div className="small">Page {page}</div>
-              <button className="btn ghost" onClick={()=>{ if(page*limit < total){ setPage(p=>p+1); load(page+1); }}}>Next</button>
+              <button className="btn-ghost" onClick={() => { if(page*limit < total) load(page+1); }}>Next</button>
             </div>
           </div>
         </div>
