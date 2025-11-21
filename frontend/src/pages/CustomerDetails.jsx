@@ -6,14 +6,13 @@ import Header from "../components/Header";
 import { AuthContext } from "../context/AuthContext";
 
 export default function CustomerDetails() {
- 
-  
   const { id } = useParams();
   const nav = useNavigate();
   const { user } = useContext(AuthContext);
 
   const [customer, setCustomer] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
 
   const loadCustomer = async () => {
     setLoading(true);
@@ -21,7 +20,6 @@ export default function CustomerDetails() {
       const res = await API.get(`/api/customers/${id}`);
       setCustomer(res.data);
     } catch (err) {
-      // When accessing someone else's customer → backend returns 403
       if (err?.response?.status === 403) {
         alert("You do not have permission to view this customer.");
         return nav("/customers");
@@ -34,17 +32,37 @@ export default function CustomerDetails() {
 
   useEffect(() => {
     loadCustomer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  // Determine ownership: check common fields that backends use to store creator/owner
+  const isOwner = (() => {
+    if (!user || !customer) return false;
+    const userId = String(user._id ?? user.id ?? user.uid ?? "");
+    const possibleOwnerFields = [
+      customer.createdBy,
+      customer.createdById,
+      customer.owner,
+      customer.userId,
+      customer.ownerId,
+      customer.creator,
+    ];
+    return possibleOwnerFields.some((f) => String(f ?? "") === userId);
+  })();
+
+  const canDelete = user?.role === "admin" || isOwner;
 
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this customer?")) return;
-
+    setDeleting(true);
     try {
-      await API.delete(`/api/customers/${id}`);   // <-- DELETE API HERE
+      await API.delete(`/api/customers/${id}`);
       alert("Customer deleted successfully");
       nav("/customers");
     } catch (err) {
       alert(err?.response?.data?.error || "Delete failed");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -81,7 +99,9 @@ export default function CustomerDetails() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Link to="/customers" className="btn-ghost">Back</Link>
+            <Link to="/customers" className="btn-ghost">
+              Back
+            </Link>
 
             <button
               className="btn-ghost"
@@ -90,9 +110,9 @@ export default function CustomerDetails() {
               Edit
             </button>
 
-            {user?.role === "admin" && (
-              <button className="btn" onClick={handleDelete}>
-                Delete
+            {canDelete && (
+              <button className="btn" onClick={handleDelete} disabled={deleting}>
+                {deleting ? "Deleting..." : "Delete"}
               </button>
             )}
           </div>
@@ -117,7 +137,7 @@ export default function CustomerDetails() {
           <div>
             <div className="small">Created</div>
             <div className="small">
-              {new Date(customer.createdAt).toLocaleString()}
+              {customer.createdAt ? new Date(customer.createdAt).toLocaleString() : "-"}
             </div>
           </div>
         </div>

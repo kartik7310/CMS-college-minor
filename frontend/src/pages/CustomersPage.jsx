@@ -7,7 +7,7 @@ export default function CustomersPage(){
     <div className="container">
       <Header />
       <div className="mt-4">
-        <CustomerList />
+        <CustomerList /> 
       </div>
     </div>
   );
